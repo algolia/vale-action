@@ -245,7 +245,7 @@ export class CheckRunner {
     }
 
     const botCommentID = await this.botCommentID(client, options);
-    if (botCommentID > 0) { // We only update the bots message if he already posted one
+    if (botCommentID > 0) { // We only update the bots message if it already posted one
       await this.postBotComment(
           client,
           `Content linting passed 🎉`,
