@@ -201,12 +201,14 @@ export class CheckRunner {
         core.warning(`[updateCheck] Unexpected status code ${response.status}`);
       }
 
-      const filesTabLink = `https://github.com/${options.owner}/${options.repo}/pull/${this.getCurrentPRNumber()}/files`;
-      await this.postBotComment(
-          client,
-          `Looks like there are some content linting errors. Please check the [files tab](${filesTabLink}) for more details`,
-          options
-      )
+      if (this.getConclusion() == 'failure') {
+        const filesTabLink = `https://github.com/${options.owner}/${options.repo}/pull/${this.getCurrentPRNumber()}/files`;
+        await this.postBotComment(
+            client,
+            `Looks like there are some content linting errors. Please check the [files tab](${filesTabLink}) for more details`,
+            options
+        )
+      }
 
       annotations = this.getBucket();
     }
