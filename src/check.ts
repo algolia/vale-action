@@ -205,7 +205,7 @@ export class CheckRunner {
         const filesTabLink = `https://github.com/${options.owner}/${options.repo}/pull/${this.getCurrentPRNumber()}/files`;
         await this.postBotComment(
             client,
-            `Looks like there are some content linting errors. Please check the [files tab](${filesTabLink}) for more details`,
+            `Looks like there are some content linting errors. Please check the [files tab](${filesTabLink}) for more details.`,
             options
         )
       }
