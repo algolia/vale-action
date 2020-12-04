@@ -36,7 +36,6 @@ interface CheckOptions {
   context: {
     vale: string;
   };
-  pull_requests: object[];
 }
 
 const onlyAnnotateModifiedLines =
@@ -202,13 +201,19 @@ export class CheckRunner {
         core.warning(`[updateCheck] Unexpected status code ${response.status}`);
       }
 
-      if (options.pull_requests.length > 0) {
-        const pr = options.pull_requests[0];
+      const parsePullRequestId = githubRef => {
+        const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
+        if (!result) return null;
+        const [, pullRequestId] = result;
+        return pullRequestId;
+      };
+      const prNumber = parsePullRequestId(process.env.GITHUB_REF)
 
-        const commentResponse = await client.request(`POST /repos/${options.owner}/${options.repo}/issues/{issue_number}/comments`, {
+      if (prNumber) {
+        const commentResponse = await client.request(`POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
           owner: options.owner,
           repo: options.repo,
-          issue_number: pr['number'],
+          issue_number: prNumber,
           body: 'Beep boop i\'m a bot 🤖'
         })
 
