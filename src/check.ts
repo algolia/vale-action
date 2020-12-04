@@ -272,7 +272,7 @@ export class CheckRunner {
 
     let endpoint = `POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`
     if (currentCommentID > 0) {
-      endpoint = `PATCH /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments/${currentCommentID}`
+      endpoint = `PATCH /repos/${options.owner}/${options.repo}/issues/comments/${currentCommentID}`
     }
 
     const commentResponse = await client.request(endpoint, {
