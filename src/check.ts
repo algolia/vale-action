@@ -201,6 +201,15 @@ export class CheckRunner {
         core.warning(`[updateCheck] Unexpected status code ${response.status}`);
       }
 
+      if (this.getConclusion() == 'failure') {
+        const filesTabLink = `https://github.com/${options.owner}/${options.repo}/pull/${this.getCurrentPRNumber()}/files`;
+        await this.postBotComment(
+            client,
+            `Looks like there are some content linting errors. Please check the [files tab](${filesTabLink}) for more details.`,
+            options
+        )
+      }
+
       annotations = this.getBucket();
     }
 
@@ -235,7 +244,93 @@ export class CheckRunner {
       core.warning(`[successCheck] Unexpected status code ${response.status}`);
     }
 
+    const botCommentID = await this.botCommentID(client, options);
+    if (botCommentID > 0) { // We only update the bots message if it already posted one
+      await this.postBotComment(
+          client,
+          `Content linting passed 🎉`,
+          options
+      )
+    }
+
     return;
+  }
+
+  private async postBotComment(
+      client: any,
+      body: string,
+      options: CheckOptions
+  ): Promise<boolean> {
+
+   const prNumber = this.getCurrentPRNumber()
+
+    if (prNumber < 1) {
+      return false;
+    }
+
+    const currentCommentID = await this.botCommentID(client, options)
+
+    let endpoint = `POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`
+    if (currentCommentID > 0) {
+      endpoint = `PATCH /repos/${options.owner}/${options.repo}/issues/comments/${currentCommentID}`
+    }
+
+    const commentResponse = await client.request(endpoint, {
+      owner: options.owner,
+      repo: options.repo,
+      issue_number: prNumber,
+      body: this.prefixBotMessage(body)
+    })
+
+    if (commentResponse.status != 200) {
+      core.warning(`[updateCheck] Unexpected status code for comment creation ${commentResponse.status}`);
+    }
+
+    return true;
+  }
+
+  private getCurrentPRNumber(): number {
+    const parsePullRequestId = githubRef => {
+      const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
+      if (!result) return 0;
+      const [, pullRequestId] = result;
+      return parseInt(pullRequestId);
+    };
+    return parsePullRequestId(process.env.GITHUB_REF)
+  }
+
+  private prefixBotMessage(
+      body: string
+  ): string {
+    return  `Beep-boop I'm the content linting bot 🤖\n\n ${body}`
+  }
+
+  private async botCommentID(
+      client: any,
+      options: CheckOptions
+  ): Promise<number> {
+
+    const prNumber = this.getCurrentPRNumber()
+
+    if (prNumber < 1) {
+      return 0;
+    }
+
+    const currentComments = await client.request(`GET /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
+      owner: options.owner,
+      repo: options.repo,
+      issue_number: prNumber,
+    })
+
+    const currentComment = currentComments.data.find((comment) => {
+      return comment.body.startsWith(this.prefixBotMessage(''))
+    })
+
+    if (!currentComment) {
+      return 0;
+    }
+
+    return currentComment.id;
   }
 
   /**
