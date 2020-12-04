@@ -209,6 +209,9 @@ export class CheckRunner {
       };
       const prNumber = parsePullRequestId(process.env.GITHUB_REF)
 
+      core.info(`ref: ${process.env.GITHUB_REF}`)
+      core.info(`parsed PR number ${prNumber}`)
+
       if (prNumber) {
         const commentResponse = await client.request(`POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
           owner: options.owner,
@@ -217,6 +220,7 @@ export class CheckRunner {
           body: 'Beep boop i\'m a bot 🤖'
         })
 
+        core.info(`Comment response status ${commentResponse.status}`)
         if (commentResponse.status != 200) {
           core.warning(`[updateCheck] Unexpected status code for comment creation ${response.status}`);
         }
