@@ -201,32 +201,7 @@ export class CheckRunner {
         core.warning(`[updateCheck] Unexpected status code ${response.status}`);
       }
 
-      const parsePullRequestId = githubRef => {
-        const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
-        if (!result) return null;
-        const [, pullRequestId] = result;
-        return pullRequestId;
-      };
-      const prNumber = parsePullRequestId(process.env.GITHUB_REF)
-
-      core.info(`ref: ${process.env.GITHUB_REF}`)
-      core.info(`parsed PR number ${prNumber}`)
-
-      if (prNumber) {
-        const commentResponse = await client.request(`POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
-          owner: options.owner,
-          repo: options.repo,
-          issue_number: prNumber,
-          body: 'Beep boop i\'m a bot 🤖'
-        })
-
-        core.info(`Comment response status ${commentResponse.status}`)
-        if (commentResponse.status != 200) {
-          core.warning(`[updateCheck] Unexpected status code for comment creation ${response.status}`);
-        }
-      }
-
-
+      await this.postBotComment(client, 'Beep boop i\'m a bot 🤖', options)
 
       annotations = this.getBucket();
     }
@@ -263,6 +238,72 @@ export class CheckRunner {
     }
 
     return;
+  }
+
+  private async postBotComment(
+      client: any,
+      body: string,
+      options: CheckOptions
+  ): Promise<boolean> {
+
+   const prNumber = this.getCurrentPRNumber()
+
+    if (prNumber < 1) {
+      return false;
+    }
+
+    const currentCommentID = await this.botCommentID(client, options)
+
+    let endpoint = `POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`
+    if (currentCommentID > 0) {
+      endpoint = `PATCH /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments/${currentCommentID}`
+    }
+
+    const commentResponse = await client.request(endpoint, {
+      owner: options.owner,
+      repo: options.repo,
+      issue_number: prNumber,
+      body
+    })
+
+    if (commentResponse.status != 200) {
+      core.warning(`[updateCheck] Unexpected status code for comment creation ${commentResponse.status}`);
+    }
+
+    return true;
+  }
+
+  private getCurrentPRNumber(): number {
+    const parsePullRequestId = githubRef => {
+      const result = /refs\/pull\/(\d+)\/merge/g.exec(githubRef);
+      if (!result) return 0;
+      const [, pullRequestId] = result;
+      return parseInt(pullRequestId);
+    };
+    return parsePullRequestId(process.env.GITHUB_REF)
+  }
+
+  private async botCommentID(
+      client: any,
+      options: CheckOptions
+  ): Promise<number> {
+
+    const prNumber = this.getCurrentPRNumber()
+
+    if (prNumber < 1) {
+      return 0;
+    }
+
+    const currentComments = await client.request(`POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
+      owner: options.owner,
+      repo: options.repo,
+      issue_number: prNumber,
+    })
+
+    core.info(`all comments: =======`)
+    core.info(JSON.stringify(currentComments))
+
+    return 0;
   }
 
   /**
