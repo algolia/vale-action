@@ -294,11 +294,12 @@ export class CheckRunner {
       return 0;
     }
 
-    const currentComments = await client.request(`POST /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
+    const currentComments = await client.request(`GET /repos/${options.owner}/${options.repo}/issues/${prNumber}/comments`, {
       owner: options.owner,
       repo: options.repo,
       issue_number: prNumber,
     })
+
 
     core.info(`all comments: =======`)
     core.info(JSON.stringify(currentComments))
