@@ -201,7 +201,12 @@ export class CheckRunner {
         core.warning(`[updateCheck] Unexpected status code ${response.status}`);
       }
 
-      await this.postBotComment(client, 'Beep boop i\'m a bot 🤖', options)
+      const filesTabLink = `https://github.com/${options.owner}/${options.repo}/pull/${this.getCurrentPRNumber()}/files`;
+      await this.postBotComment(
+          client,
+          `Looks like there are some content linting errors. Please check the [files tab](${filesTabLink}) for more details`,
+          options
+      )
 
       annotations = this.getBucket();
     }
@@ -237,6 +242,15 @@ export class CheckRunner {
       core.warning(`[successCheck] Unexpected status code ${response.status}`);
     }
 
+    const botCommentID = await this.botCommentID(client, options);
+    if (botCommentID > 0) { // We only update the bots message if he already posted one
+      await this.postBotComment(
+          client,
+          `Content linting passed 🎉`,
+          options
+      )
+    }
+
     return;
   }
 
@@ -263,7 +277,7 @@ export class CheckRunner {
       owner: options.owner,
       repo: options.repo,
       issue_number: prNumber,
-      body
+      body: this.prefixBotMessage(body)
     })
 
     if (commentResponse.status != 200) {
@@ -283,6 +297,12 @@ export class CheckRunner {
     return parsePullRequestId(process.env.GITHUB_REF)
   }
 
+  private prefixBotMessage(
+      body: string
+  ): string {
+    return  `Beep-boop I'm the content linting bot 🤖\n\n ${body}`
+  }
+
   private async botCommentID(
       client: any,
       options: CheckOptions
@@ -300,11 +320,15 @@ export class CheckRunner {
       issue_number: prNumber,
     })
 
+    const currentComment = currentComments.data.find((comment) => {
+      return comment.body.startsWith(this.prefixBotMessage(''))
+    })
 
-    core.info(`all comments: =======`)
-    core.info(JSON.stringify(currentComments))
+    if (!currentComment) {
+      return 0;
+    }
 
-    return 0;
+    return currentComment.id;
   }
 
   /**
