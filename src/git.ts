@@ -24,7 +24,7 @@ export function modifiedFilesInPR() {
     github.context.payload?.pull_request?.base?.sha;
 
   return execa
-    .commandSync(`git diff --name-only ${fromSHA}`)
+    .commandSync(`git diff --name-only --diff-filter=AM ${fromSHA}`)
     .stdout.toString()
     .split('\n');
 }
