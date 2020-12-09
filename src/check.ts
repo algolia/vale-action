@@ -480,7 +480,7 @@ export class CheckRunner {
 
     let message = alert.Message
     if (alert.Link !== '') {
-      message = `${message}\nFor more details: <a href="${alert.Link}">${alert.Link}</a>`
+      message = `${message}\nFor more details: ${alert.Link}`
     }
 
     let annotation: ChecksCreateParamsOutputAnnotations = {
