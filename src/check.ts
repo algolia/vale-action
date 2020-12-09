@@ -10,6 +10,7 @@ type Severity = 'suggestion' | 'warning' | 'error';
 
 interface Alert {
   readonly Check: string;
+  readonly Link: string;
   readonly Line: number;
   readonly Message: string;
   readonly Span: [number, number];
@@ -477,6 +478,11 @@ export class CheckRunner {
         break;
     }
 
+    let title = `[${alert.Severity}] ${alert.Check}`
+    if (alert.Link !== '') {
+      title = `[${alert.Severity}] [${alert.Check}](${alert.Link})`
+    }
+
     let annotation: ChecksCreateParamsOutputAnnotations = {
       path: name,
       start_line: alert.Line,
@@ -484,7 +490,7 @@ export class CheckRunner {
       start_column: alert.Span[0],
       end_column: alert.Span[1] == 0 ? alert.Span[0] : alert.Span[1],
       annotation_level: annotation_level,
-      title: `[${alert.Severity}] ${alert.Check}`,
+      title: title,
       message: alert.Message
     };
 
