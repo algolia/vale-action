@@ -23,8 +23,10 @@ export function modifiedFilesInPR() {
   const fromSHA: GitRef | undefined =
     github.context.payload?.pull_request?.base?.sha;
 
+  const currentSha: GitRef | undefined = github.context.payload?.pull_request?.head?.sha;
+
   return execa
-    .commandSync(`git diff --name-only --diff-filter=AM ${fromSHA}`)
+    .commandSync(`git diff --name-only --diff-filter=AM ${fromSHA}...${currentSha}`)
     .stdout.toString()
     .split('\n');
 }
