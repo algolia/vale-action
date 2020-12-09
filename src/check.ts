@@ -478,9 +478,9 @@ export class CheckRunner {
         break;
     }
 
-    let title = `[${alert.Severity}] ${alert.Check}`
+    let message = alert.Message
     if (alert.Link !== '') {
-      title = `[${alert.Severity}] [${alert.Check}](${alert.Link})`
+      message = `${message}\n[More details](${alert.Link})`
     }
 
     let annotation: ChecksCreateParamsOutputAnnotations = {
@@ -490,8 +490,8 @@ export class CheckRunner {
       start_column: alert.Span[0],
       end_column: alert.Span[1] == 0 ? alert.Span[0] : alert.Span[1],
       annotation_level: annotation_level,
-      title: title,
-      message: alert.Message
+      title: `[${alert.Severity}] ${alert.Check}`,
+      message: message
     };
 
     return annotation;
