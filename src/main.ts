@@ -1,6 +1,7 @@
 import * as core from '@actions/core';
 import * as github from '@actions/github';
 import * as tmp from 'tmp';
+import * as fs from 'fs';
 
 import {CheckRunner} from './check';
 import * as input from './input';
@@ -16,7 +17,10 @@ const {GITHUB_TOKEN, GITHUB_WORKSPACE} = process.env;
 
 export async function run(actionInput: input.Input): Promise<void> {
   const startedAt = new Date().toISOString();
-  const alertResp = await execa('vale', actionInput.args);
+
+  const command = fs.existsSync('./scripts/lint-content') ? './scripts/lint-content' : 'vale';
+  core.info(`Using command: ${command}`)
+  const alertResp = await execa(command, actionInput.args);
 
   let runner = new CheckRunner();
 
