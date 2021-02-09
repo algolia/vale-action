@@ -98,7 +98,9 @@ export async function get(tmp: any, tok: string, dir: string): Promise<Input> {
     core.getInput('onlyAnnotateModifiedLines') != 'false' ||
     files == '__onlyModified'
   ) {
-    args = args.concat(modifiedFilesInPR());
+    // We need to wrap all filenames in quotes to prevent errors.
+    const modifiedFiles = modifiedFilesInPR().map((f) => { return `"${f}"` })
+    args = args.concat(modifiedFiles);
   } else if (files == 'all') {
     args.push('.');
   } else if (fs.existsSync(path.resolve(dir, files))) {
